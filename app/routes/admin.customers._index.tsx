@@ -48,12 +48,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // Calculate total spent for each shop
   const shopsWithStats = shops.map((shop) => {
-    const totalSpent = shop.purchases.reduce((sum, p) => sum + p.price, 0);
+    const totalSpent = shop.purchases.reduce((sum, p) => sum + Number(p.price), 0);
     const hasActiveSubscription = shop.subscriptions.length > 0;
     const subscriptionStatus = shop.subscriptions[0]?.status || null;
 
     return {
-      ...shop,
+      id: shop.id,
+      shopDomain: shop.shopDomain,
+      email: shop.email,
+      createdAt: shop.createdAt.toISOString(),
       totalSpent,
       hasActiveSubscription,
       subscriptionStatus,
