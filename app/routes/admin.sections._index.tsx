@@ -143,7 +143,7 @@ export default function AdminSections() {
     <div style={{ display: "flex", gap: "8px" }}>
       <Button
         size="slim"
-        onClick={() => navigate(`/admin/sections/${section.id}`)}
+        onClick={() => navigate(`/admin/sections/${section.id}/edit`)}
       >
         Edit
       </Button>
