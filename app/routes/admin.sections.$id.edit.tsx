@@ -1,4 +1,4 @@
-import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs, unstable_parseMultipartFormData, unstable_createMemoryUploadHandler } from "@remix-run/node";
 import { useLoaderData, useNavigate, Form } from "@remix-run/react";
 import {
   Page,
@@ -17,6 +17,8 @@ import { useState } from "react";
 import { requireAdmin, logAdminActivity } from "../lib/admin-auth.server";
 import { prisma } from "../lib/db.server";
 import { AdminLayout } from "../components/layout/AdminLayout";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const admin = await requireAdmin(request);
@@ -73,7 +75,62 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return json({ error: "Section ID required" }, { status: 400 });
   }
 
-  const formData = await request.formData();
+  let formData: FormData;
+  let previewImageUrl = "";
+  
+  // Check content type to decide how to parse
+  const contentType = request.headers.get("content-type") || "";
+  
+  if (contentType.includes("multipart/form-data")) {
+    try {
+      // Handle file upload
+      const uploadHandler = unstable_createMemoryUploadHandler({
+        maxPartSize: 5_000_000, // 5MB
+      });
+      
+      formData = await unstable_parseMultipartFormData(request, uploadHandler);
+      
+      // Handle image upload
+      const imageFile = formData.get("image") as File | null;
+      
+      if (imageFile && imageFile.size > 0) {
+        try {
+          // Create uploads directory if it doesn't exist
+          const uploadsDir = join(process.cwd(), "public", "uploads", "sections");
+          await mkdir(uploadsDir, { recursive: true });
+          
+          // Get slug for filename or use timestamp
+          const slug = formData.get("slug") as string;
+          const timestamp = Date.now();
+          const filename = `${slug || timestamp}-${imageFile.name}`;
+          const filepath = join(uploadsDir, filename);
+          
+          // Save file
+          const bytes = await imageFile.arrayBuffer();
+          const buffer = Buffer.from(bytes);
+          await writeFile(filepath, buffer);
+          
+          // Set the URL
+          previewImageUrl = `/uploads/sections/${filename}`;
+        } catch (error) {
+          console.error("Error uploading image:", error);
+        }
+      }
+      
+      // Get the manually entered URL if no file was uploaded
+      if (!previewImageUrl) {
+        previewImageUrl = (formData.get("previewImageUrl") as string) || "";
+      }
+    } catch (error) {
+      console.error("Error parsing multipart form:", error);
+      return json({ error: "Error uploading file" }, { status: 500 });
+    }
+  } else {
+    // Regular form submission without file
+    formData = await request.formData();
+    previewImageUrl = (formData.get("previewImageUrl") as string) || "";
+  }
+
   const action = formData.get("_action");
 
   if (action === "delete") {
@@ -101,7 +158,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const longDescription = formData.get("longDescription") as string;
   const categoryId = formData.get("categoryId") as string;
   const price = parseFloat(formData.get("price") as string);
-  const previewImageUrl = formData.get("previewImageUrl") as string;
   const liquidContent = formData.get("liquidContent") as string;
   
   const isFree = formData.get("isFree") === "true";
@@ -178,6 +234,8 @@ export default function EditSection() {
   const [price, setPrice] = useState(section.price.toString());
   const [previewImageUrl, setPreviewImageUrl] = useState(section.previewImageUrl);
   const [liquidContent, setLiquidContent] = useState(section.liquidContent || "");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string>("");
   
   const [isFree, setIsFree] = useState(section.isFree);
   const [isPro, setIsPro] = useState(section.isPro);
@@ -211,7 +269,7 @@ export default function EditSection() {
       >
         <Layout>
           <Layout.Section>
-            <Form method="post">
+            <Form method="post" encType="multipart/form-data">
               <Card>
                 <Box padding="400">
                   <FormLayout>
@@ -273,14 +331,95 @@ export default function EditSection() {
                       requiredIndicator
                     />
 
-                    <TextField
-                      label="Preview Image URL"
-                      value={previewImageUrl}
-                      onChange={setPreviewImageUrl}
-                      name="previewImageUrl"
-                      autoComplete="off"
-                      placeholder="https://example.com/preview.png"
-                    />
+                    {/* Image Upload */}
+                    <Box>
+                      <Text variant="bodyMd" as="p" fontWeight="semibold">
+                        Preview Image
+                      </Text>
+                      <Box paddingBlockStart="200">
+                        {section.previewImageUrl && !filePreview && (
+                          <Box paddingBlockEnd="200">
+                            <Text variant="bodySm" as="p" tone="subdued">
+                              Current image:
+                            </Text>
+                            <Box paddingBlockStart="100">
+                              <img
+                                src={section.previewImageUrl}
+                                alt="Current preview"
+                                style={{
+                                  maxWidth: "300px",
+                                  maxHeight: "200px",
+                                  borderRadius: "8px",
+                                  border: "1px solid #ddd",
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        )}
+                        <input
+                          type="file"
+                          name="image"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setUploadedFile(file);
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setFilePreview(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          style={{
+                            display: "block",
+                            marginBottom: "12px",
+                            padding: "8px",
+                            border: "1px solid #ddd",
+                            borderRadius: "4px",
+                            width: "100%",
+                          }}
+                        />
+                        {filePreview && (
+                          <Box paddingBlockStart="200">
+                            <Text variant="bodySm" as="p" tone="success">
+                              New image preview:
+                            </Text>
+                            <Box paddingBlockStart="100">
+                              <img
+                                src={filePreview}
+                                alt="New preview"
+                                style={{
+                                  maxWidth: "300px",
+                                  maxHeight: "200px",
+                                  borderRadius: "8px",
+                                  border: "2px solid #008060",
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        )}
+                        <input
+                          type="hidden"
+                          name="previewImageUrl"
+                          value={previewImageUrl}
+                        />
+                      </Box>
+                      <Box paddingBlockStart="200">
+                        <Text variant="bodySm" as="p" tone="subdued">
+                          Or enter image URL manually:
+                        </Text>
+                        <Box paddingBlockStart="100">
+                          <TextField
+                            label=""
+                            value={previewImageUrl}
+                            onChange={setPreviewImageUrl}
+                            autoComplete="off"
+                            placeholder="https://example.com/preview.png"
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
 
                     <TextField
                       label="Liquid Code"
