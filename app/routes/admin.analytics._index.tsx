@@ -74,15 +74,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       role: admin.role,
     },
     analytics: {
-      totalRevenue: totalRevenue._sum.price || 0,
+      totalRevenue: Number(totalRevenue._sum.price) || 0,
       totalOrders,
       totalCustomers,
-      topSections,
+      topSections: topSections.map(s => ({
+        name: s.name,
+        purchaseCount: s.purchaseCount,
+        price: Number(s.price) || 0,
+      })),
       revenueByCategory: revenueByCategory.map((cat) => ({
         name: cat.name,
         revenue: cat.sections.reduce(
           (sum, section) =>
-            sum + section.purchases.reduce((s, p) => s + p.price, 0),
+            sum + section.purchases.reduce((s, p) => s + Number(p.price), 0),
           0
         ),
       })),

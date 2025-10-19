@@ -29,7 +29,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       email: admin.email,
       role: admin.role,
     },
-    settings,
+    settings: {
+      ...settings,
+      defaultSectionPrice: Number(settings.defaultSectionPrice) || 29,
+      defaultBundleDiscount: Number(settings.defaultBundleDiscount) || 20,
+      plusSubscriptionPrice: Number(settings.plusSubscriptionPrice) || 15,
+    },
   });
 };
 

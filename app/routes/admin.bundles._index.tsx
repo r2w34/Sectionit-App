@@ -34,13 +34,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       id: bundle.id,
       name: bundle.name,
       description: bundle.description,
-      price: bundle.price,
-      discount: bundle.discount,
+      price: Number(bundle.price) || 0,
+      discount: Number(bundle.discount) || 0,
       isFeatured: bundle.isFeatured,
       isActive: bundle.isActive,
       itemCount: bundle.items.length,
       purchaseCount: bundle._count.purchases,
-      createdAt: bundle.createdAt,
+      createdAt: bundle.createdAt.toISOString(),
     })),
   });
 };
