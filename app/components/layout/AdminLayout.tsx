@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Frame, Navigation, TopBar, ActionList, Icon } from "@shopify/polaris";
+import { AppProvider, Frame, Navigation, TopBar, ActionList, Icon } from "@shopify/polaris";
 import {
   HomeIcon,
   PackageIcon,
@@ -144,7 +144,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
   };
 
   return (
-    <>
+    <AppProvider i18n={{}}>
       <Frame
         logo={logo}
         topBar={topBarMarkup}
@@ -157,6 +157,6 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
 
       {/* Hidden logout form */}
       <Form method="post" action="/admin/logout" id="logout-form" style={{ display: "none" }} />
-    </>
+    </AppProvider>
   );
 }
