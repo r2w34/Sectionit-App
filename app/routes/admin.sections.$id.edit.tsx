@@ -170,13 +170,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return json({ error: "Invalid price value" }, { status: 400 });
   }
   
-  const isFree = formData.get("isFree") === "on" || formData.get("isFree") === "true";
-  const isPro = formData.get("isPro") === "on" || formData.get("isPro") === "true";
-  const isPlus = formData.get("isPlus") === "on" || formData.get("isPlus") === "true";
-  const isNew = formData.get("isNew") === "on" || formData.get("isNew") === "true";
-  const isTrending = formData.get("isTrending") === "on" || formData.get("isTrending") === "true";
-  const isFeatured = formData.get("isFeatured") === "on" || formData.get("isFeatured") === "true";
-  const isActive = formData.get("isActive") === "on" || formData.get("isActive") === "true";
+  // Checkbox values: hidden input sends "true"/"false" strings
+  const isFree = formData.get("isFree") === "true";
+  const isPro = formData.get("isPro") === "true";
+  const isPlus = formData.get("isPlus") === "true";
+  const isNew = formData.get("isNew") === "true";
+  const isTrending = formData.get("isTrending") === "true";
+  const isFeatured = formData.get("isFeatured") === "true";
+  const isActive = formData.get("isActive") === "true";
 
   // Get selected tags
   const selectedTags = formData.getAll("tags").filter(t => t) as string[];
