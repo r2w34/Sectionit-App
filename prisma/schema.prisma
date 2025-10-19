@@ -473,3 +473,15 @@ model AppSetting {
   
   @@map("app_settings")
 }
+
+model AppSettings {
+  id                      String   @id @default(cuid())
+  defaultSectionPrice     Decimal  @default(29) @db.Decimal(10, 2)
+  defaultBundleDiscount   Decimal  @default(20) @db.Decimal(5, 2)
+  plusSubscriptionPrice   Decimal  @default(15) @db.Decimal(10, 2)
+  supportEmail            String   @default("support@indigenservices.com")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("app_settings_config")
+}
