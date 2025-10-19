@@ -7,35 +7,65 @@ import { prisma } from "../lib/db.server";
 import { AdminLayout } from "../components/layout/AdminLayout";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const admin = await requireAdmin(request);
+  try {
+    const admin = await requireAdmin(request);
 
-  // Get app settings (create if doesn't exist)
-  let settings = await prisma.appSettings.findFirst();
-  
-  if (!settings) {
-    settings = await prisma.appSettings.create({
-      data: {
+    // Get app settings (create if doesn't exist)
+    let settings = await prisma.appSettings.findFirst();
+    
+    if (!settings) {
+      try {
+        settings = await prisma.appSettings.create({
+          data: {
+            defaultSectionPrice: 29,
+            defaultBundleDiscount: 20,
+            plusSubscriptionPrice: 15,
+            supportEmail: "support@indigenservices.com",
+          },
+        });
+      } catch (createError: any) {
+        console.error("Error creating settings:", createError);
+        // Return defaults if can't create
+        settings = {
+          id: "default",
+          defaultSectionPrice: 29,
+          defaultBundleDiscount: 20,
+          plusSubscriptionPrice: 15,
+          supportEmail: "support@indigenservices.com",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as any;
+      }
+    }
+
+    return json({
+      admin: {
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+      settings: {
+        id: settings.id,
+        defaultSectionPrice: Number(settings.defaultSectionPrice) || 29,
+        defaultBundleDiscount: Number(settings.defaultBundleDiscount) || 20,
+        plusSubscriptionPrice: Number(settings.plusSubscriptionPrice) || 15,
+        supportEmail: settings.supportEmail || "support@indigenservices.com",
+      },
+    });
+  } catch (error: any) {
+    console.error("Error loading settings:", error);
+    return json({
+      admin: { name: "Admin", email: "", role: "SUPER_ADMIN" },
+      settings: {
+        id: "default",
         defaultSectionPrice: 29,
         defaultBundleDiscount: 20,
         plusSubscriptionPrice: 15,
         supportEmail: "support@indigenservices.com",
       },
+      error: error.message || "Failed to load settings",
     });
   }
-
-  return json({
-    admin: {
-      name: admin.name,
-      email: admin.email,
-      role: admin.role,
-    },
-    settings: {
-      ...settings,
-      defaultSectionPrice: Number(settings.defaultSectionPrice) || 29,
-      defaultBundleDiscount: Number(settings.defaultBundleDiscount) || 20,
-      plusSubscriptionPrice: Number(settings.plusSubscriptionPrice) || 15,
-    },
-  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {

@@ -20,60 +20,69 @@ import { prisma } from "../lib/db.server";
 import { AdminLayout } from "../components/layout/AdminLayout";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const admin = await requireAdmin(request);
+  try {
+    const admin = await requireAdmin(request);
 
-  // Get all shops with their purchase and subscription info
-  const shops = await prisma.shop.findMany({
-    include: {
-      purchases: {
-        where: { status: "completed" },
-      },
-      subscriptions: {
-        where: { status: { in: ["active", "trial"] } },
-      },
-      _count: {
-        select: {
-          purchases: {
-            where: { status: "completed" },
+    // Get all shops with their purchase and subscription info
+    const shops = await prisma.shop.findMany({
+      include: {
+        purchases: {
+          where: { status: "completed" },
+        },
+        subscriptions: {
+          where: { status: { in: ["active", "trial"] } },
+        },
+        _count: {
+          select: {
+            purchases: {
+              where: { status: "completed" },
+            },
+            installations: {
+              where: { isActive: true },
+            },
+            favorites: true,
           },
-          installations: {
-            where: { isActive: true },
-          },
-          favorites: true,
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
 
-  // Calculate total spent for each shop
-  const shopsWithStats = shops.map((shop) => {
-    const totalSpent = shop.purchases.reduce((sum, p) => sum + Number(p.price), 0);
-    const hasActiveSubscription = shop.subscriptions.length > 0;
-    const subscriptionStatus = shop.subscriptions[0]?.status || null;
+    // Calculate total spent for each shop
+    const shopsWithStats = shops.map((shop) => {
+      const totalSpent = shop.purchases.reduce((sum, p) => sum + Number(p.price || 0), 0);
+      const hasActiveSubscription = shop.subscriptions.length > 0;
+      const subscriptionStatus = shop.subscriptions[0]?.status || null;
 
-    return {
-      id: shop.id,
-      shopDomain: shop.shopDomain,
-      email: shop.email,
-      createdAt: shop.createdAt.toISOString(),
-      totalSpent,
-      hasActiveSubscription,
-      subscriptionStatus,
-      purchaseCount: shop._count.purchases,
-      installationCount: shop._count.installations,
-      favoriteCount: shop._count.favorites,
-    };
-  });
+      return {
+        id: shop.id,
+        shopDomain: shop.shopDomain || "",
+        email: shop.email || "",
+        createdAt: shop.createdAt.toISOString(),
+        totalSpent,
+        hasActiveSubscription,
+        subscriptionStatus,
+        purchaseCount: shop._count.purchases || 0,
+        installationCount: shop._count.installations || 0,
+        favoriteCount: shop._count.favorites || 0,
+      };
+    });
 
-  return json({
-    admin: {
-      name: admin.name,
-      email: admin.email,
-      role: admin.role,
-    },
-    shops: shopsWithStats,
-  });
+    return json({
+      admin: {
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+      shops: shopsWithStats,
+    });
+  } catch (error: any) {
+    console.error("Error loading customers:", error);
+    return json({
+      admin: { name: "Admin", email: "", role: "SUPER_ADMIN" },
+      shops: [],
+      error: error.message || "Failed to load customers",
+    });
+  }
 };
 
 export default function AdminCustomers() {
