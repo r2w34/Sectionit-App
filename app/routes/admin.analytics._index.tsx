@@ -186,24 +186,55 @@ export default function AdminAnalytics() {
                   Revenue by Category
                 </Text>
                 <Box paddingBlockStart="400">
-                  {analytics.revenueByCategory.map((category, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 0",
-                        borderBottom: index < analytics.revenueByCategory.length - 1 ? "1px solid #e1e3e5" : "none",
-                      }}
-                    >
-                      <Text variant="bodyMd" as="p">
-                        {category.name}
-                      </Text>
-                      <Text variant="bodyMd" as="p" fontWeight="semibold">
-                        ${category.revenue.toFixed(2)}
-                      </Text>
-                    </div>
-                  ))}
+                  {analytics.revenueByCategory.length > 0 ? (
+                    <>
+                      {analytics.revenueByCategory.map((category, index) => {
+                        const maxRevenue = Math.max(...analytics.revenueByCategory.map(c => c.revenue));
+                        const percentage = maxRevenue > 0 ? (category.revenue / maxRevenue) * 100 : 0;
+                        
+                        return (
+                          <div key={index} style={{ marginBottom: "16px" }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                marginBottom: "8px",
+                              }}
+                            >
+                              <Text variant="bodyMd" as="p">
+                                {category.name}
+                              </Text>
+                              <Text variant="bodyMd" as="p" fontWeight="semibold">
+                                ${category.revenue.toFixed(2)}
+                              </Text>
+                            </div>
+                            <div
+                              style={{
+                                width: "100%",
+                                height: "8px",
+                                backgroundColor: "#e1e3e5",
+                                borderRadius: "4px",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: `${percentage}%`,
+                                  height: "100%",
+                                  backgroundColor: "#008060",
+                                  transition: "width 0.3s ease",
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <Text variant="bodyMd" as="p" tone="subdued">
+                      No revenue data yet
+                    </Text>
+                  )}
                 </Box>
               </Box>
             </Card>
