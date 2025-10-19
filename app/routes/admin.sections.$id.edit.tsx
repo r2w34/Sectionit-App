@@ -181,6 +181,26 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const finalPreviewImageUrl = previewImageUrl || existingSection?.previewImageUrl || "";
 
   try {
+    console.log("=== SECTION UPDATE DEBUG ===");
+    console.log("Section ID:", id);
+    console.log("Data to update:", {
+      name,
+      slug,
+      shortDescription,
+      longDescription,
+      categoryId,
+      price: isFree ? 0 : price,
+      finalPreviewImageUrl,
+      liquidContent: liquidContent?.substring(0, 50),
+      isFree,
+      isPro,
+      isPlus,
+      isNew,
+      isTrending,
+      isFeatured,
+      isActive,
+    });
+    
     await prisma.section.update({
       where: { id },
       data: {
@@ -202,10 +222,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       },
     });
 
+    console.log("Section updated successfully");
+
     // Update tags
     await prisma.sectionTag.deleteMany({
       where: { sectionId: id },
     });
+
+    console.log("Old tags deleted, creating new tags:", selectedTags);
 
     if (selectedTags.length > 0) {
       await prisma.sectionTag.createMany({
@@ -216,6 +240,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       });
     }
 
+    console.log("Tags updated successfully");
+
     await logAdminActivity(
       admin.id,
       "update",
@@ -225,9 +251,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       request
     );
 
+    console.log("Admin activity logged, redirecting...");
+
     return redirect("/admin/sections?success=updated");
   } catch (error: any) {
-    return json({ error: error.message }, { status: 500 });
+    console.error("=== ERROR UPDATING SECTION ===");
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+    return json({ error: error.message, details: error.toString() }, { status: 500 });
   }
 };
 
