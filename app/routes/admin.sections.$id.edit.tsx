@@ -155,21 +155,31 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
   const shortDescription = formData.get("shortDescription") as string;
-  const longDescription = formData.get("longDescription") as string;
+  const longDescription = formData.get("longDescription") as string || "";
   const categoryId = formData.get("categoryId") as string;
-  const price = parseFloat(formData.get("price") as string);
-  const liquidContent = formData.get("liquidContent") as string;
+  const priceStr = formData.get("price") as string;
+  const price = priceStr ? parseFloat(priceStr) : 0;
+  const liquidContent = formData.get("liquidContent") as string || "";
   
-  const isFree = formData.get("isFree") === "true";
-  const isPro = formData.get("isPro") === "true";
-  const isPlus = formData.get("isPlus") === "true";
-  const isNew = formData.get("isNew") === "true";
-  const isTrending = formData.get("isTrending") === "true";
-  const isFeatured = formData.get("isFeatured") === "true";
-  const isActive = formData.get("isActive") === "true";
+  // Validate required fields
+  if (!name || !slug || !shortDescription || !categoryId) {
+    return json({ error: "Missing required fields" }, { status: 400 });
+  }
+  
+  if (isNaN(price) || price < 0) {
+    return json({ error: "Invalid price value" }, { status: 400 });
+  }
+  
+  const isFree = formData.get("isFree") === "on" || formData.get("isFree") === "true";
+  const isPro = formData.get("isPro") === "on" || formData.get("isPro") === "true";
+  const isPlus = formData.get("isPlus") === "on" || formData.get("isPlus") === "true";
+  const isNew = formData.get("isNew") === "on" || formData.get("isNew") === "true";
+  const isTrending = formData.get("isTrending") === "on" || formData.get("isTrending") === "true";
+  const isFeatured = formData.get("isFeatured") === "on" || formData.get("isFeatured") === "true";
+  const isActive = formData.get("isActive") === "on" || formData.get("isActive") === "true";
 
   // Get selected tags
-  const selectedTags = formData.getAll("tags") as string[];
+  const selectedTags = formData.getAll("tags").filter(t => t) as string[];
   
   // Get existing section to preserve previewImageUrl if not changed
   const existingSection = await prisma.section.findUnique({
