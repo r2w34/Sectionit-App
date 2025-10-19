@@ -1,5 +1,5 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
+import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -10,9 +10,10 @@ import {
   TextField,
   Select,
   Icon,
+  Banner,
 } from "@shopify/polaris";
 import { SearchIcon, PlusIcon } from "@shopify/polaris-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { requireAdmin } from "../lib/admin-auth.server";
 import { prisma } from "../lib/db.server";
 import { AdminLayout } from "../components/layout/AdminLayout";
@@ -54,9 +55,32 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function AdminSections() {
   const { admin, sections, categories } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchValue, setSearchValue] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  
+  // Check for success message from redirect
+  useEffect(() => {
+    const success = searchParams.get("success");
+    if (success === "created") {
+      setSuccessMessage("Section created successfully!");
+      setShowSuccessBanner(true);
+      // Remove the query param
+      searchParams.delete("success");
+      setSearchParams(searchParams, { replace: true });
+      // Hide after 3 seconds
+      setTimeout(() => setShowSuccessBanner(false), 3000);
+    } else if (success === "updated") {
+      setSuccessMessage("Section updated successfully!");
+      setShowSuccessBanner(true);
+      searchParams.delete("success");
+      setSearchParams(searchParams, { replace: true });
+      setTimeout(() => setShowSuccessBanner(false), 3000);
+    }
+  }, [searchParams, setSearchParams]);
 
   const categoryOptions = [
     { label: "All Categories", value: "all" },
@@ -172,6 +196,15 @@ export default function AdminSections() {
         }}
       >
         <Layout>
+          {/* Success Banner */}
+          {showSuccessBanner && (
+            <Layout.Section>
+              <Banner tone="success" onDismiss={() => setShowSuccessBanner(false)}>
+                <p>{successMessage}</p>
+              </Banner>
+            </Layout.Section>
+          )}
+          
           {/* Filters */}
           <Layout.Section>
             <Card>

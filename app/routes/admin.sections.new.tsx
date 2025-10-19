@@ -165,7 +165,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       request
     );
 
-    return redirect("/admin/sections");
+    return redirect("/admin/sections?success=created");
   } catch (error: any) {
     return json({ error: error.message }, { status: 500 });
   }

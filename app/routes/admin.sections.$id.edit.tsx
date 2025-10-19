@@ -170,6 +170,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   // Get selected tags
   const selectedTags = formData.getAll("tags") as string[];
+  
+  // Get existing section to preserve previewImageUrl if not changed
+  const existingSection = await prisma.section.findUnique({
+    where: { id },
+    select: { previewImageUrl: true },
+  });
+  
+  // Use new image URL if provided, otherwise keep existing
+  const finalPreviewImageUrl = previewImageUrl || existingSection?.previewImageUrl || "";
 
   try {
     await prisma.section.update({
@@ -181,7 +190,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         longDescription,
         categoryId,
         price: isFree ? 0 : price,
-        previewImageUrl,
+        previewImageUrl: finalPreviewImageUrl,
         liquidContent,
         isFree,
         isPro,
@@ -216,7 +225,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       request
     );
 
-    return redirect("/admin/sections");
+    return redirect("/admin/sections?success=updated");
   } catch (error: any) {
     return json({ error: error.message }, { status: 500 });
   }
