@@ -1,6 +1,6 @@
 import { json, redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
-import { Page, Card, FormLayout, TextField, Button, Text, Banner, Box } from "@shopify/polaris";
+import { AppProvider, Page, Card, FormLayout, TextField, Button, Text, Banner, Box } from "@shopify/polaris";
 import { useState } from "react";
 import { verifyLogin, createAdminSession, getAdminId } from "../lib/admin-auth.server";
 
@@ -48,16 +48,17 @@ export default function AdminLogin() {
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        background: "#f6f6f7",
-        padding: "20px",
-      }}
-    >
+    <AppProvider i18n={{}}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          background: "#f6f6f7",
+          padding: "20px",
+        }}
+      >
       <div style={{ width: "100%", maxWidth: "400px" }}>
         <div style={{ marginBottom: "24px", textAlign: "center" }}>
           <Text variant="heading2xl" as="h1">
@@ -124,5 +125,6 @@ export default function AdminLogin() {
         </Box>
       </div>
     </div>
+    </AppProvider>
   );
 }
