@@ -4,12 +4,7 @@ import {
   HomeIcon,
   SearchIcon,
   PackageIcon,
-  LightbulbIcon,
-  RefreshIcon,
-  QuestionCircleIcon,
-  LightningBoltIcon,
   SettingsIcon,
-  HeartIcon,
 } from "@shopify/polaris-icons";
 import { useNavigate, useMatches } from "@remix-run/react";
 
@@ -47,26 +42,26 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     {
       url: "/app/conversion",
       label: "Conversion Blocks",
-      icon: LightningBoltIcon,
+      icon: PackageIcon,
       selected: currentPath.startsWith("/app/conversion"),
       badge: "Plus",
     },
     {
       url: "/app/inspiration",
       label: "Section Inspiration",
-      icon: LightbulbIcon,
+      icon: SearchIcon,
       selected: currentPath.startsWith("/app/inspiration"),
     },
     {
       url: "/app/migrator",
       label: "Theme Migrator",
-      icon: RefreshIcon,
+      icon: HomeIcon,
       selected: currentPath.startsWith("/app/migrator"),
     },
     {
       url: "/app/help",
       label: "Help Center",
-      icon: QuestionCircleIcon,
+      icon: HomeIcon,
       selected: currentPath.startsWith("/app/help"),
     },
   ];
@@ -75,7 +70,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     {
       url: "/app/favorites",
       label: "Favorites",
-      icon: HeartIcon,
+      icon: HomeIcon,
       selected: currentPath.startsWith("/app/favorites"),
     },
     {

@@ -3,11 +3,7 @@ import { Frame, Navigation, TopBar, ActionList, Icon } from "@shopify/polaris";
 import {
   HomeIcon,
   PackageIcon,
-  ProductsIcon,
-  CustomersIcon,
-  AnalyticsIcon,
   SettingsIcon,
-  LogOutIcon,
   OrderIcon,
 } from "@shopify/polaris-icons";
 import { useNavigate, useMatches, Form } from "@remix-run/react";
@@ -47,7 +43,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     {
       url: "/admin/sections",
       label: "Sections",
-      icon: ProductsIcon,
+      icon: PackageIcon,
       selected: currentPath.startsWith("/admin/sections"),
     },
     {
@@ -59,7 +55,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     {
       url: "/admin/customers",
       label: "Customers",
-      icon: CustomersIcon,
+      icon: HomeIcon,
       selected: currentPath.startsWith("/admin/customers"),
     },
     {
@@ -71,7 +67,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     {
       url: "/admin/analytics",
       label: "Analytics",
-      icon: AnalyticsIcon,
+      icon: HomeIcon,
       selected: currentPath.startsWith("/admin/analytics"),
     },
     {
@@ -99,7 +95,6 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
       items: [
         {
           content: "Sign Out",
-          icon: LogOutIcon,
           onAction: () => {
             // This will be handled by a form submission
             const form = document.getElementById("logout-form") as HTMLFormElement;
