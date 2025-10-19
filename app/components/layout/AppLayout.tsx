@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AppProvider, Frame, Navigation, TopBar } from "@shopify/polaris";
+import { Frame, Navigation, TopBar } from "@shopify/polaris";
 import {
   HomeIcon,
   SearchIcon,
@@ -115,16 +115,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AppProvider i18n={{}}>
-      <Frame
-        logo={logo}
-        topBar={topBarMarkup}
-        navigation={navigationMarkup}
-        showMobileNavigation={mobileNavigationActive}
-        onNavigationDismiss={toggleMobileNavigationActive}
-      >
-        {children}
-      </Frame>
-    </AppProvider>
+    <Frame
+      logo={logo}
+      topBar={topBarMarkup}
+      navigation={navigationMarkup}
+      showMobileNavigation={mobileNavigationActive}
+      onNavigationDismiss={toggleMobileNavigationActive}
+    >
+      {children}
+    </Frame>
   );
 }
