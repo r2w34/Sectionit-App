@@ -47,12 +47,61 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const admin = await requireAdmin(request);
   
-  // Handle file upload
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 5_000_000, // 5MB
-  });
+  let formData: FormData;
+  let previewImageUrl = "";
   
-  const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+  // Check content type to decide how to parse
+  const contentType = request.headers.get("content-type") || "";
+  
+  if (contentType.includes("multipart/form-data")) {
+    try {
+      // Handle file upload
+      const uploadHandler = unstable_createMemoryUploadHandler({
+        maxPartSize: 5_000_000, // 5MB
+      });
+      
+      formData = await unstable_parseMultipartFormData(request, uploadHandler);
+      
+      // Handle image upload
+      const imageFile = formData.get("image") as File | null;
+      
+      if (imageFile && imageFile.size > 0) {
+        try {
+          // Create uploads directory if it doesn't exist
+          const uploadsDir = join(process.cwd(), "public", "uploads", "sections");
+          await mkdir(uploadsDir, { recursive: true });
+          
+          // Get slug for filename or use timestamp
+          const slug = formData.get("slug") as string;
+          const timestamp = Date.now();
+          const filename = `${slug || timestamp}-${imageFile.name}`;
+          const filepath = join(uploadsDir, filename);
+          
+          // Save file
+          const bytes = await imageFile.arrayBuffer();
+          const buffer = Buffer.from(bytes);
+          await writeFile(filepath, buffer);
+          
+          // Set the URL
+          previewImageUrl = `/uploads/sections/${filename}`;
+        } catch (error) {
+          console.error("Error uploading image:", error);
+        }
+      }
+      
+      // Get the manually entered URL if no file was uploaded
+      if (!previewImageUrl) {
+        previewImageUrl = (formData.get("previewImageUrl") as string) || "";
+      }
+    } catch (error) {
+      console.error("Error parsing multipart form:", error);
+      return json({ error: "Error uploading file" }, { status: 500 });
+    }
+  } else {
+    // Regular form submission without file
+    formData = await request.formData();
+    previewImageUrl = (formData.get("previewImageUrl") as string) || "";
+  }
 
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
@@ -61,33 +110,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const categoryId = formData.get("categoryId") as string;
   const price = parseFloat(formData.get("price") as string);
   const liquidContent = formData.get("liquidContent") as string;
-  
-  // Handle image upload
-  let previewImageUrl = formData.get("previewImageUrl") as string;
-  const imageFile = formData.get("image") as File | null;
-  
-  if (imageFile && imageFile.size > 0) {
-    try {
-      // Create uploads directory if it doesn't exist
-      const uploadsDir = join(process.cwd(), "public", "uploads", "sections");
-      await mkdir(uploadsDir, { recursive: true });
-      
-      // Generate unique filename
-      const timestamp = Date.now();
-      const filename = `${slug || timestamp}-${imageFile.name}`;
-      const filepath = join(uploadsDir, filename);
-      
-      // Save file
-      const bytes = await imageFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filepath, buffer);
-      
-      // Set the URL
-      previewImageUrl = `/uploads/sections/${filename}`;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-    }
-  }
 
   const isFree = formData.get("isFree") === "true";
   const isPro = formData.get("isPro") === "true";
