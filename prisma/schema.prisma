@@ -1,0 +1,451 @@
+// Prisma Schema for Section Store App
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// SHOP & MERCHANT MODELS
+// ============================================================================
+
+model Shop {
+  id                String         @id @default(cuid())
+  shopDomain        String         @unique
+  accessToken       String
+  scopes            String
+  email             String?
+  shopName          String?
+  planName          String?
+  country           String?
+  currency          String?
+  installedAt       DateTime       @default(now())
+  uninstalledAt     DateTime?
+  isActive          Boolean        @default(true)
+  
+  purchases         Purchase[]
+  installations     Installation[]
+  subscriptions     Subscription[]
+  favorites         Favorite[]
+  bundlePurchases   BundlePurchase[]
+  supportTickets    SupportTicket[]
+  featureRequests   FeatureRequest[]
+  
+  @@map("shops")
+  @@index([shopDomain])
+  @@index([isActive])
+}
+
+// ============================================================================
+// SECTION MODELS
+// ============================================================================
+
+model Section {
+  id                String         @id @default(cuid())
+  name              String
+  slug              String         @unique
+  shortDescription  String
+  longDescription   String?        @db.Text
+  price             Float          @default(0)
+  compareAtPrice    Float?
+  isFree            Boolean        @default(false)
+  isPro             Boolean        @default(false)
+  isPlus            Boolean        @default(false)
+  liquidContent     String         @db.Text
+  cssContent        String?        @db.Text
+  jsContent         String?        @db.Text
+  previewImageUrl   String
+  fullPreviewUrl    String?
+  demoUrl           String?
+  videoUrl          String?
+  documentation     String?        @db.Text
+  setupInstructions String?        @db.Text
+  rating            Float          @default(0)
+  reviewCount       Int            @default(0)
+  purchaseCount     Int            @default(0)
+  viewCount         Int            @default(0)
+  installCount      Int            @default(0)
+  categoryId        String
+  
+  // Status flags
+  isActive          Boolean        @default(true)
+  isFeatured        Boolean        @default(false)
+  isTrending        Boolean        @default(false)
+  isNew             Boolean        @default(false)
+  
+  // Theme compatibility
+  compatibleThemes  String[]       @default([])
+  minShopifyVersion String         @default("2.0")
+  
+  // SEO
+  seoTitle          String?
+  seoDescription    String?
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  publishedAt       DateTime?
+  
+  category          Category       @relation(fields: [categoryId], references: [id])
+  tags              SectionTag[]
+  purchases         Purchase[]
+  installations     Installation[]
+  favorites         Favorite[]
+  bundleItems       BundleItem[]
+  reviews           Review[]
+  screenshots       Screenshot[]
+  
+  @@map("sections")
+  @@index([slug])
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([price])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  icon        String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  
+  sections    Section[]
+  
+  @@map("categories")
+}
+
+model Tag {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  slug     String       @unique
+  
+  sections SectionTag[]
+  
+  @@map("tags")
+}
+
+model SectionTag {
+  sectionId String
+  tagId     String
+  
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([sectionId, tagId])
+  @@map("section_tags")
+}
+
+model Screenshot {
+  id          String  @id @default(cuid())
+  sectionId   String
+  imageUrl    String
+  caption     String?
+  order       Int     @default(0)
+  
+  section     Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  
+  @@map("screenshots")
+  @@index([sectionId])
+}
+
+// ============================================================================
+// PURCHASE & BILLING MODELS
+// ============================================================================
+
+model Purchase {
+  id              String   @id @default(cuid())
+  shopId          String
+  sectionId       String
+  price           Float
+  chargeId        String   @unique
+  status          String   @default("pending")
+  purchasedAt     DateTime @default(now())
+  refundedAt      DateTime?
+  refundReason    String?
+  
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  section         Section  @relation(fields: [sectionId], references: [id])
+  
+  @@unique([shopId, sectionId])
+  @@map("purchases")
+  @@index([shopId])
+  @@index([status])
+}
+
+model Installation {
+  id           String    @id @default(cuid())
+  shopId       String
+  sectionId    String
+  themeId      String
+  themeName    String?
+  installedAt  DateTime  @default(now())
+  removedAt    DateTime?
+  isActive     Boolean   @default(true)
+  
+  shop         Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  section      Section   @relation(fields: [sectionId], references: [id])
+  
+  @@map("installations")
+  @@index([shopId])
+  @@index([sectionId])
+  @@index([themeId])
+}
+
+// ============================================================================
+// BUNDLE MODELS
+// ============================================================================
+
+model Bundle {
+  id             String          @id @default(cuid())
+  name           String
+  slug           String          @unique
+  description    String
+  regularPrice   Float
+  bundlePrice    Float
+  discountPercent Float
+  badge          String?
+  isActive       Boolean         @default(true)
+  isFeatured     Boolean         @default(false)
+  previewUrl     String?
+  order          Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  items          BundleItem[]
+  purchases      BundlePurchase[]
+  
+  @@map("bundles")
+}
+
+model BundleItem {
+  id         String  @id @default(cuid())
+  bundleId   String
+  sectionId  String
+  order      Int     @default(0)
+  
+  bundle     Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  section    Section @relation(fields: [sectionId], references: [id])
+  
+  @@unique([bundleId, sectionId])
+  @@map("bundle_items")
+}
+
+model BundlePurchase {
+  id           String   @id @default(cuid())
+  shopId       String
+  bundleId     String
+  price        Float
+  chargeId     String   @unique
+  status       String   @default("pending")
+  purchasedAt  DateTime @default(now())
+  
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  bundle       Bundle   @relation(fields: [bundleId], references: [id])
+  
+  @@map("bundle_purchases")
+  @@index([shopId])
+}
+
+// ============================================================================
+// SUBSCRIPTION MODELS (Plus Membership)
+// ============================================================================
+
+model Subscription {
+  id              String    @id @default(cuid())
+  shopId          String
+  plan            String    @default("plus")
+  price           Float
+  status          String    @default("active")
+  chargeId        String    @unique
+  startedAt       DateTime  @default(now())
+  trialEndsAt     DateTime?
+  cancelledAt     DateTime?
+  expiresAt       DateTime?
+  
+  shop            Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  
+  @@map("subscriptions")
+  @@index([shopId])
+  @@index([status])
+}
+
+// ============================================================================
+// REVIEW & RATING MODELS
+// ============================================================================
+
+model Review {
+  id         String   @id @default(cuid())
+  sectionId  String
+  shopId     String
+  shopDomain String
+  rating     Int
+  title      String?
+  comment    String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  section    Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  
+  @@map("reviews")
+  @@index([sectionId])
+  @@index([isApproved])
+}
+
+// ============================================================================
+// FAVORITE MODELS
+// ============================================================================
+
+model Favorite {
+  id         String   @id @default(cuid())
+  shopId     String
+  sectionId  String
+  createdAt  DateTime @default(now())
+  
+  shop       Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  section    Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  
+  @@unique([shopId, sectionId])
+  @@map("favorites")
+}
+
+// ============================================================================
+// SUPPORT & FEATURE REQUEST MODELS
+// ============================================================================
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  shopId      String
+  shopDomain  String
+  subject     String
+  message     String   @db.Text
+  priority    String   @default("normal")
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  closedAt    DateTime?
+  
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  replies     TicketReply[]
+  
+  @@map("support_tickets")
+  @@index([shopId])
+  @@index([status])
+}
+
+model TicketReply {
+  id          String   @id @default(cuid())
+  ticketId    String
+  message     String   @db.Text
+  isStaff     Boolean  @default(false)
+  authorName  String
+  authorEmail String?
+  createdAt   DateTime @default(now())
+  
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  @@map("ticket_replies")
+  @@index([ticketId])
+}
+
+model FeatureRequest {
+  id          String   @id @default(cuid())
+  shopId      String
+  shopDomain  String
+  title       String
+  description String   @db.Text
+  category    String
+  status      String   @default("suggested")
+  votes       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  
+  @@map("feature_requests")
+  @@index([shopId])
+  @@index([status])
+}
+
+// ============================================================================
+// ADMIN PANEL MODELS
+// ============================================================================
+
+model AdminUser {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  name          String
+  passwordHash  String
+  role          AdminRole   @default(ADMIN)
+  isActive      Boolean     @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  activities    AdminActivity[]
+  
+  @@map("admin_users")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  CONTENT_MANAGER
+  SUPPORT_AGENT
+}
+
+model AdminActivity {
+  id          String   @id @default(cuid())
+  adminId     String
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  admin       AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  @@map("admin_activity")
+  @@index([adminId])
+  @@index([createdAt])
+  @@index([resource])
+}
+
+// ============================================================================
+// ANALYTICS MODELS
+// ============================================================================
+
+model Analytics {
+  id          String   @id @default(cuid())
+  date        DateTime
+  metric      String
+  value       Float
+  metadata    Json?
+  
+  @@map("analytics")
+  @@index([date])
+  @@index([metric])
+}
+
+// ============================================================================
+// APP SETTINGS MODELS
+// ============================================================================
+
+model AppSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime @updatedAt
+  
+  @@map("app_settings")
+}

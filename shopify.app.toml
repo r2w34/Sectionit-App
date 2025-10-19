@@ -1,0 +1,29 @@
+# Shopify App Configuration
+# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "Section Store"
+client_id = "" # Will be set by Shopify CLI
+application_url = "https://your-app-url.com"
+embedded = true
+
+[access_scopes]
+# Only request necessary scopes
+scopes = "read_themes,write_themes"
+
+[auth]
+redirect_urls = [
+  "https://your-app-url.com/auth/callback",
+  "https://your-app-url.com/auth/shopify/callback",
+  "https://your-app-url.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-01"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "" # Your development store URL
+include_config_on_deploy = true

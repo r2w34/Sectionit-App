@@ -1,0 +1,52 @@
+{
+  "name": "section-store",
+  "version": "2.0.0",
+  "description": "Complete Shopify Section Store App - Marketplace for theme sections",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "shopify app dev",
+    "build": "shopify app build",
+    "deploy": "shopify app deploy",
+    "generate": "shopify app generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "node prisma/seed.js",
+    "lint": "eslint --cache .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.0",
+    "@remix-run/node": "^2.3.2",
+    "@remix-run/react": "^2.3.2",
+    "@remix-run/serve": "^2.3.2",
+    "@shopify/app-bridge": "^3.7.10",
+    "@shopify/app-bridge-react": "^3.7.10",
+    "@shopify/polaris": "^12.0.0",
+    "@shopify/shopify-app-remix": "^2.3.0",
+    "@shopify/shopify-app-session-storage-prisma": "^3.0.0",
+    "bcryptjs": "^2.4.3",
+    "framer-motion": "^10.16.16",
+    "isbot": "^4.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.10.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.3.2",
+    "@remix-run/eslint-config": "^2.3.2",
+    "@shopify/api-codegen-preset": "^0.0.5",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.1",
+    "prisma": "^5.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
