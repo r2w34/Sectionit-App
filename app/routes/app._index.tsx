@@ -6,12 +6,9 @@ import {
   Layout,
   Card,
   Button,
-  BlockStack,
   Text,
-  InlineGrid,
   Box,
 } from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../lib/shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -19,7 +16,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return json({
     shop: session.shop,
-    shopId: session.id,
   });
 };
 
@@ -28,55 +24,51 @@ export default function Index() {
   const navigate = useNavigate();
 
   return (
-    <Page>
-      <TitleBar title="Section Store" />
-      <BlockStack gap="500">
-        <Layout>
-          <Layout.Section>
-            <Card>
-              <BlockStack gap="500">
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">
-                    Welcome to Section Store! 🎉
-                  </Text>
-                  <Text variant="bodyMd" as="p">
-                    Browse and install premium Shopify theme sections
-                  </Text>
-                </BlockStack>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingMd">
-                    Get started
-                  </Text>
-                  <Text as="p" variant="bodyMd">
-                    Explore our collection of ready-to-use sections for your store
-                  </Text>
-                </BlockStack>
-                <InlineGrid columns="1fr auto">
-                  <Button onClick={() => navigate("/app/explore")}>
-                    Browse Sections
-                  </Button>
-                </InlineGrid>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
+    <Page title="Section Store">
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <Box padding="400">
+              <div style={{ marginBottom: "20px" }}>
+                <Text as="h2" variant="headingLg">
+                  Welcome to Section Store! 🎉
+                </Text>
+              </div>
+              <div style={{ marginBottom: "20px" }}>
+                <Text variant="bodyMd" as="p">
+                  Browse and install premium Shopify theme sections for your store: {shop}
+                </Text>
+              </div>
+              <div style={{ marginTop: "20px" }}>
+                <Button variant="primary" onClick={() => navigate("/app/explore")}>
+                  Browse Sections
+                </Button>
+              </div>
+            </Box>
+          </Card>
+        </Layout.Section>
 
-          <Layout.Section variant="oneThird">
-            <Card>
-              <BlockStack gap="200">
-                <Text as="h3" variant="headingMd">
-                  Quick Stats
+        <Layout.Section>
+          <Card>
+            <Box padding="400">
+              <Text as="h3" variant="headingMd">
+                Quick Start
+              </Text>
+              <div style={{ marginTop: "12px" }}>
+                <Text as="p" variant="bodyMd">
+                  • Explore our collection of sections
                 </Text>
                 <Text as="p" variant="bodyMd">
-                  Store: {shop}
+                  • Purchase sections for your store
                 </Text>
-                <Button onClick={() => navigate("/app/explore")}>
-                  Explore Sections
-                </Button>
-              </BlockStack>
-            </Card>
-          </Layout.Section>
-        </Layout>
-      </BlockStack>
+                <Text as="p" variant="bodyMd">
+                  • Install directly to your theme
+                </Text>
+              </div>
+            </Box>
+          </Card>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }
